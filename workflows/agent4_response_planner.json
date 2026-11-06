@@ -1,0 +1,179 @@
+{
+  "name": "P4 Agent 4 - Response Planner (Integrated Subworkflow)",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "33006a07-f411-4cee-bb9b-a40f0419f72a",
+      "name": "When Called by Orchestrator",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        1008,
+        -64
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nconst partId = String(raw.part_id || '').trim();\nconst qty = Number(raw.shortage_quantity);\nconst requiredBy = String(raw.required_by || '').trim().slice(0,10);\nif (!/^P\\d{3}$/.test(partId)) throw new Error('part_id must look like P084');\nif (!Number.isSafeInteger(qty) || qty <= 0) throw new Error('shortage_quantity must be a positive integer');\nif (!/^\\d{4}-\\d{2}-\\d{2}$/.test(requiredBy) || Number.isNaN(Date.parse(requiredBy + 'T00:00:00Z'))) throw new Error('required_by must be YYYY-MM-DD');\nreturn [{json:{incident_id: String(raw.incident_id || 'unspecified'), part_id:partId, shortage_quantity:qty, required_by:requiredBy, production_at_risk: raw.production_at_risk === true}}];"
+      },
+      "id": "618eaa26-80fa-4c30-aa04-69b345c8cba0",
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1232,
+        -64
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/call",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ name: \"get_inventory\", arguments: { part_id: $(\"Validate Input\").first().json.part_id } }) }}",
+        "options": {}
+      },
+      "id": "c3abd3ca-c901-4f90-8d7f-42d4c3293380",
+      "name": "Get Qualified Suppliers",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1456,
+        -64
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "M9IAKjsnqdqi3tRY",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst inventory = $input.first().json;\nconst part = inventory.part;\n\n// Check the inventory response\nif (!part || !part.part_id) {\n  throw new Error(\"Part information missing\");\n}\n\n// Get data from Agent 3\nconst input = $(\"Validate Input\").first().json;\n\nconst shortageQty = Number(input.shortage_quantity);\nconst minOrderQty = Number(part.min_order_qty || 1);\n\n// Calculate order quantity\nconst orderQty = Math.max(shortageQty, minOrderQty);\n\n// Find all qualified suppliers\nconst suppliers = [\n  part.preferred_supplier,\n  ...String(part.qualified_alternates || \"\")\n    .split(\",\")\n    .map(s => s.trim())\n].filter(s => s && s !== \"nan\");\n\n// Remove duplicate suppliers\nconst uniqueSuppliers = [...new Set(suppliers)];\n\nif (uniqueSuppliers.length === 0) {\n  throw new Error(\"No qualified suppliers found\");\n}\n\n// Generate sea and air quotes for each supplier\nconst candidates = [];\n\nfor (const supplierId of uniqueSuppliers) {\n  for (const mode of [\"sea\", \"air\"]) {\n    candidates.push({\n      json: {\n        incident_id: input.incident_id,\n        part_id: part.part_id,\n        supplier_id: supplierId,\n        qty: orderQty,\n        mode: mode,\n        shortage_quantity: shortageQty,\n        min_order_qty: minOrderQty,\n        quantity_reason:\n          orderQty > shortageQty\n            ? \"Minimum order quantity applied\"\n            : \"Actual shortage quantity\"\n      }\n    });\n  }\n}\n\nreturn candidates;\n"
+      },
+      "id": "a3c94ab0-c8fa-460b-bfd2-5e4175a25ed9",
+      "name": "Build Quote Candidates",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        -64
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/call",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ name: \"request_quote\", arguments: { part_id: $json.part_id, supplier_id: $json.supplier_id, qty: $json.qty, mode: $json.mode } }) }}",
+        "options": {}
+      },
+      "id": "d115d2e9-faac-4599-aeea-35da826fde0d",
+      "name": "Request Real Quotes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1888,
+        -64
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "M9IAKjsnqdqi3tRY",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Validate Input').first().json;\nconst quotes = $input.all().map(item => item.json);\nconst requiredMs = Date.parse(input.required_by + 'T00:00:00Z');\nconst assessed = quotes.map(q => {\n  const arrivalMs = Date.parse(String(q.earliest_arrival).slice(0,10) + 'T00:00:00Z');\n  const valid = Boolean(q.quote_id && q.supplier_id && q.part_id === input.part_id && Number.isFinite(arrivalMs) && Number.isFinite(Number(q.total_aed)));\n  return {...q, valid, arrives_on_time: valid && arrivalMs <= requiredMs, days_late: valid ? Math.max(0, Math.round((arrivalMs-requiredMs)/86400000)) : null};\n}).filter(q => q.valid);\nif (!assessed.length) throw new Error('No valid quotes returned');\nconst timely = assessed.filter(q => q.arrives_on_time).sort((a,b) => Number(a.total_aed)-Number(b.total_aed) || String(a.earliest_arrival).localeCompare(String(b.earliest_arrival)));\nconst late = assessed.filter(q => !q.arrives_on_time).sort((a,b) => String(a.earliest_arrival).localeCompare(String(b.earliest_arrival)) || Number(a.total_aed)-Number(b.total_aed));\nconst selected = timely[0] || late[0];\nconst ready = timely.length > 0;\nreturn [{json:{\n  incident_id:input.incident_id,\n  part_id:input.part_id,\n  shortage_quantity:input.shortage_quantity,\n  ordered_quantity:selected.qty,\n  minimum_order_quantity:\n    Number($(\"Get Qualified Suppliers\").first().json.part.min_order_qty || 1),\n  \n  quantity_reason:\n    Number(selected.qty) > Number(input.shortage_quantity)\n      ? \"Minimum order quantity applied\"\n      : \"Actual shortage quantity\",\n  required_by:input.required_by,\n  status:ready ? 'ready_for_procurement' : 'escalate_no_on_time_quote',\n  auto_procurement_allowed:ready,\n  selected_quote_id:selected.quote_id,\n  selected_supplier_id:selected.supplier_id,\n  selected_mode:selected.mode,\n  estimated_total_aed:selected.total_aed,\n  earliest_arrival:selected.earliest_arrival,\n  arrives_on_time:selected.arrives_on_time,\n  justification:ready\n    ? `Qualified ${selected.supplier_id}, ${selected.mode} shipping, quote ${selected.quote_id}; cost AED ${selected.total_aed}, arrival ${selected.earliest_arrival} by required date ${input.required_by}. Quantity ${selected.qty} includes supplier minimum if applicable.`\n    : `No quoted supplier can meet ${input.required_by}. Earliest available option: ${selected.supplier_id} ${selected.mode}, arriving ${selected.earliest_arrival}; requires escalation and production replanning before ordering.`,\n  comparison:assessed.sort((a,b)=>Number(b.arrives_on_time)-Number(a.arrives_on_time) || Number(a.days_late)-Number(b.days_late) || Number(a.total_aed)-Number(b.total_aed))\n}}];"
+      },
+      "id": "0274d37a-b920-4745-be0a-c92179b7c9a0",
+      "name": "Select Best Safe Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2112,
+        -64
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Called by Orchestrator": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Get Qualified Suppliers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Qualified Suppliers": {
+      "main": [
+        [
+          {
+            "node": "Build Quote Candidates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Quote Candidates": {
+      "main": [
+        [
+          {
+            "node": "Request Real Quotes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Request Real Quotes": {
+      "main": [
+        [
+          {
+            "node": "Select Best Safe Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "cb4c63be-a0df-4441-be56-8d96e2d1ff6e",
+  "meta": {
+    "instanceId": "615ec97ff8b01ed956b493b97beda3600477b4078bc4974fa20386fcccf17599"
+  },
+  "nodeGroups": [],
+  "id": "ThRFvRNUoBBUnPKR",
+  "tags": []
+}

@@ -218,3 +218,14 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Local configuration
+.env
+
+# Simulation output
+runs/
