@@ -343,7 +343,7 @@ tiles = base.mark_rect(cornerRadius=4, stroke="#1a1a19", strokeWidth=2).encode(
              alt.Tooltip("po_id:N", title="Order"), alt.Tooltip("shortage:Q", title="Units short")])
 marks = base.mark_text(fontSize=13, fontWeight="bold").encode(
     text="mark:N", color=alt.condition("datum.row == 'Person needed'", alt.value("#0b0b0b"), alt.value("#ffffff")))
-st.altair_chart((tiles + marks).properties(height=215).configure_view(strokeWidth=0), width="stretch")
+st.altair_chart((tiles + marks).properties(height=215).configure_view(strokeWidth=0), use_container_width=True)
 
 for part, g in sent[sent["po_part"] != ""].groupby("po_part"):
     if len(g) > 1:
@@ -421,7 +421,7 @@ with st.expander("Full data, check by check (for the team)"):
         "shortage": "Units short", "revenue_at_risk": "Sales at risk (AED)", "buy": "Action", "po_id": "Order",
         "review": "Person needed"})
     table = table.drop(columns="Risk")
-    st.dataframe(table, width="stretch", hide_index=True,
+    st.dataframe(table, use_container_width=True, hide_index=True,
                  column_config={"Sales at risk (AED)": st.column_config.NumberColumn(format="%d"),
                                 "Sim time": st.column_config.DatetimeColumn(format="DD MMM HH:mm")})
     st.download_button("Download as CSV", table.to_csv(index=False), "p4_cycles.csv", "text/csv")
