@@ -45,14 +45,15 @@ Select a saved practice run from the sidebar. The dashboard supports pasted or u
 
 ## Optional: connect a local FastAPI simulator bridge
 
-The dashboard can connect to a separately supplied simulator bridge, **but `bridge.py` and the competition simulator are not included in this portfolio repository**. If you have an authorized copy of `bridge.py`, start it in a separate terminal from the directory containing that file:
+The dashboard can connect to a separately supplied simulator bridge, **but `bridge.py` and the competition workbook are not included in this portfolio repository**. The original bridge also imports `p4_supply_api.py` and needs `common.py`; keep these modules alongside your authorized local `bridge.py`. Put the local workbook at `data/P4_Supply_Disruption_Data.xlsx` (or beside `bridge.py`). Then, in a separate terminal from the directory containing the bridge, start it with a locally chosen key:
 
 ```bash
 pip install fastapi uvicorn
+export P4_API_KEY="YOUR_LOCAL_TEST_KEY"
 uvicorn bridge:app --host 127.0.0.1 --port 8000
 ```
 
-This command assumes `bridge.py` exports a FastAPI object named `app`; adjust the import target if yours differs. In the dashboard sidebar, enter `http://127.0.0.1:8000` under **Bridge URL** and supply the bridge's API key at runtime. The optional **Check rule violations** button calls `GET /summary`; the bridge must implement that endpoint for this feature to work.
+The supplied bridge exports a FastAPI object named `app`; it should run with **one worker and without `--reload`** because its simulator session is held in process memory. Check `http://127.0.0.1:8000/health` for an unauthenticated health response. In the dashboard sidebar, enter `http://127.0.0.1:8000` under **Bridge URL** and supply the same key in **X-API-Key**. The optional **Check rule violations** button calls authenticated `GET /summary`.
 
 If n8n is running somewhere that cannot reach your machine, you may use a temporary Cloudflare tunnel **only if you are authorized to expose the simulator**:
 
@@ -60,7 +61,7 @@ If n8n is running somewhere that cannot reach your machine, you may use a tempor
 cloudflared tunnel --url http://127.0.0.1:8000
 ```
 
-Copy the temporary `https://…trycloudflare.com` address into the relevant n8n HTTP Request nodes. Keep the bridge key out of exported JSON and screenshots; use appropriate authentication, and close the tunnel after testing. An unauthenticated tunnel can expose local API operations to the internet. For more setup details, see [setup and limitations](docs/setup-and-limitations.md).
+Copy the temporary `https://…trycloudflare.com` address into the relevant n8n HTTP Request nodes. Keep the bridge key out of exported JSON and screenshots; use appropriate authentication, and close the tunnel after testing. A tunnel exposes an endpoint to the internet, so do not use one unless you are authorized to expose this simulator. For more setup details, see [setup and limitations](docs/setup-and-limitations.md).
 
 ## Demonstrated safeguards
 
