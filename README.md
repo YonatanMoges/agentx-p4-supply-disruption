@@ -1,38 +1,46 @@
 # P4 Supply Disruption Responder
 
-**First-place project — AgentX@CCI 2026, University of Sharjah**
+**🏆 First Place — AgentX@CCI 2026, University of Sharjah**
 
-A five-agent workflow prototype for responding to supplier disruptions. It monitors evidence of delays, assesses potential inventory and production impact, compares response options, and passes consequential procurement decisions through safety and approval checks. An accompanying Streamlit dashboard turns saved practice-run outputs into an understandable timeline and agent-by-agent explanation.
+A five-agent supply-chain response system built with **n8n, Python, API tools, and Streamlit**. It detects disruptions affecting HVAC manufacturing, measures their impact, and prepares procurement decisions for a buyer.
 
-## How it works
+## The challenge
+
+An air-conditioning manufacturer sources **150 components from 35 suppliers across 8 countries** for **12 products**. Port closures, factory fires, price changes, and supplier communications can threaten deliveries and production schedules.
+
+The goal: **detect disruptions from news and emails, assess production and inventory impact, and prepare the best response for buyer approval.**
+
+## The five agents
 
 | Agent | Responsibility |
 | --- | --- |
-| 1 — Orchestrator | Coordinates monitoring cycles and routes information between agents. |
-| 2 — Disruption detector | Checks supplier communications and other signals, verifies disruptions, and flags suspicious instructions. |
-| 3 — Impact analyst | Estimates shortages, affected manufacturing orders, and revenue at risk. |
-| 4 — Response planner | Compares alternatives and recommends buying, waiting, or escalating. |
-| 5 — Procurement and approval | Applies procurement checks, requests approval where required, and executes permitted actions. |
+| **1 · Orchestrator** | Coordinates monitoring cycles and reports the decisions. |
+| **2 · Disruption Detector** | Verifies news and supplier messages; flags suspicious instructions. |
+| **3 · Impact Analyst** | Connects affected parts to inventory, bills of materials, production delays, and revenue at risk. |
+| **4 · Response Planner** | Compares qualified alternatives, shipping options, and waiting. |
+| **5 · Procurement & Approval** | Checks procurement rules, prepares orders, and escalates buyer decisions. |
 
-The system was implemented in **n8n** using APIs and AI-assisted steps. The **Streamlit** dashboard displays the results in human-readable form instead of requiring an evaluator to inspect individual workflow nodes.
+The workflow follows the competition's rules: **qualified suppliers only**, buyer approval for orders over **AED 50,000**, and no action on unverified sender instructions or approval-bypass attempts.
+
+## Dashboard
+
+The Streamlit dashboard turns saved competition practice outputs into a monitoring timeline, business-impact summary, and step-by-step explanation of each agent's actions. Highlights include:
+
+- **Practice 1 · Check 12:** A verified 21-day delay, a 158-unit shortage, and an alternative shipment selected.
+- **Practice 3 · Check 15:** A suspicious approval-bypass message flagged while procurement is held for a buyer decision.
+- **Practice 5 · Check 18:** Multiple disruptions assessed with procurement escalated for human review.
 
 ## Repository layout
 
 ```text
-dashboard/
-  app.py                       Streamlit dashboard and saved practice-run examples
-  requirements.txt             Dashboard dependencies
-workflows/
-  agent_01_orchestrator.json
-  agent_02_disruption_detector.json
-  agent_03_impact_analyst.json   Synthetic offline demonstration data
-  agent_04_response_planner.json
-  agent_05_procurement_approval.json
-docs/
-  setup-and-limitations.md     Import notes, security, and demonstration scope
+dashboard/   Streamlit dashboard and saved practice-run outputs
+workflows/   Five sanitized n8n workflow exports
+docs/        Setup instructions and technical notes
 ```
 
-## Run the dashboard
+## Run locally
+
+The dashboard works without a simulator:
 
 ```bash
 python3 -m venv .venv
@@ -41,40 +49,17 @@ pip install -r dashboard/requirements.txt
 streamlit run dashboard/app.py
 ```
 
-Select a saved practice run from the sidebar. The dashboard supports pasted or uploaded n8n output and an optional simulator connection. **The saved examples are demonstration outputs, not a live connection to the simulation environment.**
-
-## Optional: connect a local FastAPI simulator bridge
-
-The dashboard can connect to a separately supplied simulator bridge, **but `bridge.py` and the competition workbook are not included in this portfolio repository**. The original bridge also imports `p4_supply_api.py` and needs `common.py`; keep these modules alongside your authorized local `bridge.py`. Put the local workbook at `data/P4_Supply_Disruption_Data.xlsx` (or beside `bridge.py`). Then, in a separate terminal from the directory containing the bridge, start it with a locally chosen key:
+For live simulator testing, an authorized copy of `bridge.py`, `p4_supply_api.py`, `common.py`, and `data/P4_Supply_Disruption_Data.xlsx` is required. From the bridge directory:
 
 ```bash
-pip install fastapi uvicorn
 export P4_API_KEY="YOUR_LOCAL_TEST_KEY"
 uvicorn bridge:app --host 127.0.0.1 --port 8000
 ```
 
-The supplied bridge exports a FastAPI object named `app`; it should run with **one worker and without `--reload`** because its simulator session is held in process memory. Check `http://127.0.0.1:8000/health` for an unauthenticated health response. In the dashboard sidebar, enter `http://127.0.0.1:8000` under **Bridge URL** and supply the same key in **X-API-Key**. The optional **Check rule violations** button calls authenticated `GET /summary`.
+In Streamlit, set the Bridge URL to `http://127.0.0.1:8000` and supply the key. For authorized remote n8n testing, use `cloudflared tunnel --url http://127.0.0.1:8000` and configure the resulting URL in the HTTP nodes. See [setup details](docs/setup-and-limitations.md).
 
-If n8n is running somewhere that cannot reach your machine, you may use a temporary Cloudflare tunnel **only if you are authorized to expose the simulator**:
+## Team
 
-```bash
-cloudflared tunnel --url http://127.0.0.1:8000
-```
+**Yonatan Moges · Mohamed Nasser Moneim · Mohamed Ahmed · Muhammad Azhar · Rafi Ibne Nur**
 
-Copy the temporary `https://…trycloudflare.com` address into the relevant n8n HTTP Request nodes. Keep the bridge key out of exported JSON and screenshots; use appropriate authentication, and close the tunnel after testing. A tunnel exposes an endpoint to the internet, so do not use one unless you are authorized to expose this simulator. For more setup details, see [setup and limitations](docs/setup-and-limitations.md).
-
-## Demonstrated safeguards
-
-- Disruption claims are checked before action.
-- Suspicious email instructions (including approval-bypass attempts) are flagged.
-- Procurement can be blocked or escalated instead of automatically placing an order.
-- Buyers remain responsible for approvals and ambiguous decisions.
-- The dashboard shows what each agent found, what it decided, and when human review was required.
-
-## Scope and attribution
-
-This is a **competition prototype**, not a production supply-chain system. The n8n exports require the event simulator/tool API, renewed local credentials, and re-mapping of subworkflow IDs before they can run in a new n8n instance. The sample data and monetary impacts shown in the dashboard come from practice scenarios, not actual company sales or verified savings.
-
-Built as a five-member team project at the University of Sharjah by **Yonatan Moges, Mohamed Nasser Moneim, Mohamed Ahmed, Muhammad Azhar, and Rafi Ibne Nur**. The team won first place at **AgentX@CCI 2026**. Individual contributions and code ownership should not be inferred from this portfolio copy.
-
-The published exports have been sanitized; no API keys or n8n credential bindings are provided. Agent 3's original embedded competition spreadsheet has been replaced with six entirely synthetic demonstration rows and is **not** a complete offline replica. See [setup and limitations](docs/setup-and-limitations.md).
+*Competition prototype with simulated data; Practice 1 includes a repeated-order issue, and live execution requires the original simulator configuration.*
