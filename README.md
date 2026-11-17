@@ -10,6 +10,10 @@ An air-conditioning manufacturer sources **150 components from 35 suppliers acro
 
 The goal: **detect disruptions from news and emails, assess production and inventory impact, and prepare the best response for buyer approval.**
 
+## Business workflow
+
+**Detect → Verify → Analyze → Plan → Approve → Execute & report.** The system turns disruption signals into assessed production impact and procurement responses, with buyer approval whenever required.
+
 ## The five agents
 
 | Agent | Responsibility |
@@ -24,7 +28,7 @@ The workflow follows the competition's rules: **qualified suppliers only**, buye
 
 ## Dashboard
 
-The Streamlit dashboard turns saved competition practice outputs into a monitoring timeline, business-impact summary, and step-by-step explanation of each agent's actions.
+**Explore three recorded practice scenarios without setting up n8n, connecting to the simulator, or providing API credentials.** The Streamlit dashboard replays monitoring timelines, business-impact summaries, and step-by-step explanations of each agent's actions.
 
 ### Overview
 
