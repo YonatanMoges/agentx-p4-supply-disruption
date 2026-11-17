@@ -218,3 +218,15 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+# P4 competition simulator data
+data/
+runs/
+
+# Local credentials
+.env.*
+*.key
+
+# macOS
+.DS_Store
