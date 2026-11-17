@@ -24,7 +24,7 @@ The workflow follows the competition's rules: **qualified suppliers only**, buye
 
 ## Dashboard
 
-The Streamlit dashboard turns saved competition practice outputs into a monitoring timeline, business-impact summary, and step-by-step explanation of each agent's actions. Highlights include:
+The Streamlit dashboard turns saved competition practice outputs into a monitoring timeline, business-impact summary, and step-by-step explanation of each agent's actions.
 
 ### Overview
 
@@ -37,10 +37,6 @@ The Streamlit dashboard turns saved competition practice outputs into a monitori
 ### Human oversight · Practice 3, check 15
 
 ![Suspicious approval-bypass email flagged and buyer decision escalated](screenshots/human-review-cycle15.webp)
-
-- **Practice 1 · Check 12:** A verified 21-day delay, a 158-unit shortage, and an alternative shipment selected.
-- **Practice 3 · Check 15:** A suspicious approval-bypass message flagged while procurement is held for a buyer decision.
-- **Practice 5 · Check 18:** Multiple disruptions assessed with procurement escalated for human review.
 
 ## Repository layout
 
