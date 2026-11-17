@@ -25,7 +25,7 @@ dashboard/
 workflows/
   agent_01_orchestrator.json
   agent_02_disruption_detector.json
-  agent_03_impact_analyst.json   Pending: embedded offline dataset review
+  agent_03_impact_analyst.json   Synthetic offline demonstration data
   agent_04_response_planner.json
   agent_05_procurement_approval.json
 docs/
@@ -57,4 +57,4 @@ This is a **competition prototype**, not a production supply-chain system. The n
 
 Built as a five-member team project at the University of Sharjah by **Yonatan Moges, Mohamed Nasser Moneim, Mohamed Ahmed, Muhammad Azhar, and Rafi Ibne Nur**. The team won first place at **AgentX@CCI 2026**. Individual contributions and code ownership should not be inferred from this portfolio copy.
 
-The published exports have been sanitized; no API keys or n8n credential bindings are provided. The Impact Analyst export remains unpublished pending a separate review of its embedded offline data. See [setup and limitations](docs/setup-and-limitations.md).
+The published exports have been sanitized; no API keys or n8n credential bindings are provided. Agent 3's original embedded competition spreadsheet has been replaced with six entirely synthetic demonstration rows and is **not** a complete offline replica. See [setup and limitations](docs/setup-and-limitations.md).
