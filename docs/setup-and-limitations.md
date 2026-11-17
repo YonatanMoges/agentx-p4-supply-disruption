@@ -12,6 +12,8 @@ Import the five JSON files in `workflows/` into a compatible n8n instance. They 
 
 Some exports contain temporary local test nodes and reference competition-specific tool endpoints. The repository demonstrates the architecture; it is **not a ready-to-run package without the original simulator environment**.
 
+Agent 3's `Offline Data` node uses six small, wholly invented sample rows (one per table) instead of the original embedded competition spreadsheet. This preserves the expected lookup structure for illustration but cannot reproduce the original offline scenario results.
+
 ## Dashboard
 
 The dashboard includes three saved practice scenarios (24 monitoring cycles each), extracted from actual competition practice outputs. Select these to review the timeline and five-agent decisions without an API key. Live mode requires a separately running, authorized bridge and an API key supplied at runtime.
