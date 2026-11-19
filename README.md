@@ -74,4 +74,3 @@ In Streamlit, set the Bridge URL to `http://127.0.0.1:8000` and supply the key. 
 
 **Yonatan Moges · Mohamed Nasser Moneim · Mohamed Ahmed · Muhammad Azhar · Rafi Ibne Nur**
 
-*Competition prototype with simulated data; Practice 1 includes a repeated-order issue, and live execution requires the original simulator configuration.*
