@@ -1,6 +1,6 @@
 # P4 Supply Disruption Responder
 
-**🏆 First Place — AgentX@CCI 2026, University of Sharjah**
+**🏆 First Place - AgentX@CCI 2026, University of Sharjah**
 
 A five-agent supply-chain response system built with **n8n, Python, API tools, and Streamlit**. It detects disruptions affecting HVAC manufacturing, measures their impact, and prepares procurement decisions for a buyer.
 
