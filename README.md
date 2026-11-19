@@ -72,5 +72,5 @@ In Streamlit, set the Bridge URL to `http://127.0.0.1:8000` and supply the key. 
 
 ## Team
 
-[Yonatan Moges](https://github.com/YonatanMoges) · [Mohamed Nasser Moneim](https://github.com/mohammednasser249) · [Mohamed Ahmed](https://github.com/muhamedah) · [Muhammad Azhar](https://github.com/aazzbhaarr161-code) · [Rafi Ibne Nur](https://github.com/RafibinNur)
+[Yonatan Moges](https://github.com/YonatanMoges) · [Mohamed Nasser Moneim](https://github.com/mohammednasser249) · [Mohamed Ahmed](https://github.com/muhamedah) · [Muhammad Azhar](https://github.com/aazzhhaarr161-code) · [Rafi Ibne Nur](https://github.com/RafibinNur)
 
